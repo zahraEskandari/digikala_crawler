@@ -119,7 +119,7 @@ Output:
 
 ---
 
-## Notes
+### 3. Notes
 - Product detail API **requires trailing slash**:
   ```
   https://api.digikala.com/v2/product/<id>/
