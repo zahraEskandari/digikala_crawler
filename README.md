@@ -126,3 +126,18 @@ Output:
   ```
 - Crawling is multi-threaded using `Multispider`
 - Delays are intentionally added to reduce API pressure
+
+
+## 📦 Dataset Release
+
+A snapshot of the collected data is available as a ZIP file in the **GitHub Releases** section.
+
+- The dataset was collected on **2026-01-07**
+- It includes:
+  - Category-level product CSV files
+  - Product-level detailed JSONL files
+
+📥 Download the data from here:  
+https://github.com/zahraEskandari/digikala_crawler/releases
+
+> Note: Generated data directories (`csv/`, `product_jsonl/`) are intentionally excluded from version control and are provided only via releases.
