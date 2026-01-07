@@ -7,7 +7,8 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
-from webdriver_manager.chrome import ChromeDriverManager
+
+# from webdriver_manager.chrome import ChromeDriverManager
 
 from category import Category
 from utility import *
@@ -85,7 +86,26 @@ class DigikalaSpider:
         self.is_range_base = self.start_page is not None and self.end_page is not None
 
         options = self.get_browser_options()
-        self.browser = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+        # self.browser = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+        
+        options = Options()
+
+        # Tell Selenium to use Chromium (not Google Chrome)
+        options.binary_location = "/usr/bin/chromium-browser"
+
+        # Strongly recommended for crawlers
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+
+        service = ChromeService("/usr/bin/chromedriver")
+
+        self.browser = webdriver.Chrome(
+            service=service,
+            options=options
+        )
+
+
 
     @staticmethod
     def get_browser_options():
@@ -106,138 +126,105 @@ class DigikalaSpider:
         product_list_elem.click()
         delay(self.home_page_delay)
 
+    
+
     def get_categories(self):
-        category_elems = self.get_categories_elems()
-        categories = []
-        for category_elem in category_elems:
-            category_name = self.get_element_data(category_elem, self.xpaths['category_name'])
-            category_link = self.get_element_data(category_elem, self.xpaths['category_link'])
-            category = Category(category_name, category_link)
-            if category not in categories:
-                categories.append(category)
+        from category import Category
+        import requests
+
+        url = "https://api.digikala.com/v1/search/"
+        r = requests.get(
+            url,
+            params={"page": 1},
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Accept": "application/json",
+            },
+            timeout=10,
+        )
+
+        payload = r.json()
+
+        api_categories = (
+            payload
+            .get("data", {})
+            .get("filters", {})        # ✅ correct key
+            .get("categories", {})     # ✅ correct key
+            .get("options", [])        # ✅ list of category dicts
+        )
+
+        categories = [
+            Category(
+                name=c.get("title_fa"),
+                link=c.get("id")
+            )
+            for c in api_categories
+            if c.get("title_fa") and c.get("code")
+        ]
 
         return categories
 
-    def get_categories_elems(self):
-        tree = html.fromstring(self.browser.page_source)
-        category_form_1_elems = tree.xpath(self.xpaths['category_form_1'])
-        category_form_2_elems = tree.xpath(self.xpaths['category_form_2'])
-        category_elems = category_form_1_elems + category_form_2_elems
-        return category_elems
+        
 
-    def is_category_page(self):
-        products_list_wrapper_xpath = self.xpaths['products_list_wrapper']
-        products_list_wrapper_elem = self.browser.find_elements(By.XPATH, products_list_wrapper_xpath)
-        return len(products_list_wrapper_elem) != 0
+    
 
-    @staticmethod
-    def get_element_data(tree, xpath):
-        elements = tree.xpath(xpath)
-        if len(elements) == 0:
-            return '-'
-        return elements[0]
-
-    def get_page_products(self):
-        tree = html.fromstring(self.browser.page_source)
-
-        product_block_elems = tree.xpath(self.xpaths['product_block'])
-        products = []
-
-        for product_block_elem in product_block_elems:
-
-            product_block_html = html.tostring(product_block_elem, encoding='unicode')
-            product_block_tree = html.fromstring(product_block_html)
-
-            product_name = self.get_element_data(product_block_tree, self.xpaths['product_name'])
-            product_price = self.get_element_data(product_block_tree, self.xpaths['product_price'])
-            product_inventory = self.get_element_data(product_block_tree, self.xpaths['product_inventory'])
-            product_score = self.get_element_data(product_block_tree, self.xpaths['product_score'])
-
-            if product_inventory == '-':
-                product_inventory = 'موجود'
-
-            products.append([product_name, product_price, product_inventory, product_score])
-
-        return products
-
-    def get_next_page_link(self, link: str, page_num):
-
-        if link.endswith('/'):
-            page_link = self.get_absolute_link(link) + f'?page={page_num}'
-        else:
-            absolute_link = self.get_absolute_link(link)
-            inx = absolute_link.rindex('/')
-            page_link = absolute_link[:inx] + f'?page={page_num}&' + absolute_link[inx:]
-        return page_link
-
+    
+    
     def get_category_products_data(self, category):
-        self.browser.get(self.get_absolute_link(category.link))
-        delay(self.first_page_of_category_delay)
-
-        if not self.is_category_page():
-            return None
+        print(category)
+        import requests
 
         products_data = []
+        self.max_page_num_per_category = 1
+        for page in range(1, self.max_page_num_per_category + 1):
+            r = requests.get(
+                "https://api.digikala.com/v1/search/",
+                params={
+                    "categories[]": [category.link],
+                    "page": page
+                },
+                headers={
+                    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+                    "Accept": "application/json",
+                },
+                timeout=50
+            )
+                        
 
-        for page_num in range(1, self.max_page_num_per_category + 1):
-            page_link = self.get_next_page_link(category.link, page_num)
-            self.browser.get(page_link)
-            delay(self.min_page_delay, self.max_page_delay)
+            data = r.json().get("data", {})
 
-            self.load_page(page_link)
-
-            products = self.get_page_products()
-
-            products_data.extend(products)
-
-            if not self.has_next_page():
+            products = data.get("products", [])
+           
+            if not products:
                 break
-
+            x = 0
+            for p in products:
+                print(x)
+                x = x+1 
+                products_data.append([
+                    p.get("title_fa"),p.get("title_en"),p.get("url") , p.get('data_layer') , p.get('')
+                    #p.get("price", {}).get("selling_price"), 
+                    # "موجود" if p.get("status") == "marketable" else "ناموجود", 
+                    #p.get("rating", {}).get("rate")
+                ])
+            print(products_data)
         return products_data
 
-    def load_page(self,link):
-        try_num = 0
-        while len(self.browser.find_elements(By.XPATH, self.xpaths['pages_block'])) == 0:
-            delay(self.try_page_delay)
-            try_num += 1
-            if try_num == self.num_of_try_page_load:
-                return
 
-        try_num = 0
-        products = self.get_page_products()
-        while not self.is_valid_products(products):
-            delay(self.try_page_delay)
-            try_num += 1
-            if try_num == self.num_of_try_page_load:
-                return
 
-            products = self.get_page_products()
-
-    def has_next_page(self):
-        next_page = self.browser.find_elements(By.XPATH, self.xpaths['next_page_button'])
-        return len(next_page) != 0
-
-    @staticmethod
-    def is_valid_products(products):
-        if not products:
-            return False
-
-        for product in products:
-            if product[0] == '-':
-                return False
-        return True
-
-    def get_num_of_categories(self):
-        self.load_home_page()
+    def get_num_of_categories(self):        
         return len(self.get_categories())
+
 
     def crawl(self):
 
-        self.load_home_page()
+        # self.load_home_page()
         categories = self.get_categories()
 
         if not exists(self.saved_file_dir):
             os.mkdir(self.saved_file_dir)
+            
+        print(f'{self.saved_file_dir} Exists')
 
         for i, category in enumerate(categories):
 
@@ -245,8 +232,12 @@ class DigikalaSpider:
                 continue
 
             file_name = category.name + ' - ' + slugify(category.link, True).replace('search', '')
+            # print(file_name)
+            # print(category.link)
+            print(self.saved_file_dir + file_name + '.csv')
             if not exists(self.saved_file_dir + file_name + '.csv'):
                 products_data = self.get_category_products_data(category)
+                print(products_data)
                 if products_data:
                     write_category_to_csv(self.saved_file_dir, file_name,
                                           self.product_info, products_data)

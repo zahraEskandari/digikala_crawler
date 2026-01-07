@@ -1,0 +1,13 @@
+# IDE
+.idea/
+
+# Python virtual environment
+.venv/
+
+# Generated data
+csv/
+data/
+archive/
+product_jsonl/
+
+
