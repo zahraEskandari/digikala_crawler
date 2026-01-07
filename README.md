@@ -63,17 +63,7 @@ Used to retrieve full product details including specifications, attributes, desc
 
 ---
 
-## Git Ignore
 
-The following directories are ignored in this project:
-- .idea/
-- .venv/
-- csv/
-- data/
-- archive/
-- product_jsonl/
-
----
 
 ## Credits
 
@@ -95,22 +85,8 @@ The structure and crawling logic have been adapted and extended to support:
 - Use delays and multithreading responsibly.
 
 
-# Digikala Crawler
 
-This project crawls Digikala categories, products, and product details using Digikala public APIs.
 
-## APIs Used
-- Categories:
-  https://api.digikala.com/v1/search/
-- Products in category:
-  https://api.digikala.com/v1/search/?categories[]=77&page=1
-- Product detail:
-  https://api.digikala.com/v2/product/19500751/
-
-This project is heavily inspired by:
-https://github.com/HB-2000/digikala_crawler/
-
----
 
 ## How to Run
 
