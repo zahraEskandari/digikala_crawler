@@ -11,3 +11,6 @@ archive/
 product_jsonl/
 
 
+__pycache__/
+*.pyc
+*.pyo
