@@ -146,12 +146,10 @@ Output:
 
 A snapshot of the collected data is available as a ZIP file in the **GitHub Releases** section.
 
-- The dataset was collected on **2026-01-07**
+- The dataset was collected on **2026-01-20**
 - It includes:
-  - Category-level product CSV files
-  - Product-level detailed JSONL files
+  - product.csv 
 
 📥 Download the data from here:  
 https://github.com/zahraEskandari/digikala_crawler/releases
 
-> Note: Generated data directories (`csv/`, `product_jsonl/`) are intentionally excluded from version control and are provided only via releases.
