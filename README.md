@@ -118,8 +118,22 @@ Output:
 ```
 
 ---
+### 3. Extract Products data as csv file 
+This step extract product details into a **csv file**.
+Each product is saved as **one record in csv file**.
 
-### 3. Notes
+```bash
+python extract_data.py
+```
+
+Output:
+```
+./products.csv
+```
+
+---
+
+### 4. Notes
 - Product detail API **requires trailing slash**:
   ```
   https://api.digikala.com/v2/product/<id>/
