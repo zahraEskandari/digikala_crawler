@@ -2,7 +2,7 @@ from digikala_product_spider import DigikalaProductSpider
 from multisprider import Multispider
 
 if __name__ == "__main__":
-    num_spiders = 2
+    num_spiders = 10
 
     base = DigikalaProductSpider()
     ranges = []

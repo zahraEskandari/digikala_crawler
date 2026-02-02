@@ -14,12 +14,6 @@ def write_category_to_csv(file_dir, file_name, headers, rows):
         csvwriter.writerows(rows)
 
 
-# def delay(min_sec, max_sec=None):
-#     if max_sec is None:
-#         max_sec = min_sec
-#     sleep(random.randint(min_sec, max_sec + 1))
-
-
 
 def delay(min_sec=1.5, max_sec=2.0):
     sleep(random.uniform(min_sec, max_sec))
